@@ -35,6 +35,9 @@ class Ntfy extends Plugin
             return;
         }
 
+	$host->add_hook($host::HOOK_ARTICLE_FILTER, $this);
+        $host->add_hook($host::HOOK_PREFS_EDIT_FEED, $this);
+        $host->add_hook($host::HOOK_PREFS_SAVE_FEED, $this);
 	$host->add_hook($host::HOOK_PREFS_TAB, $this);
         $host->add_filter_action($this, "Notification", __("Send Notification"));
     }
@@ -51,7 +54,7 @@ class Ntfy extends Plugin
         if (version_compare(PHP_VERSION, '7.0.0', '<')) {
             print_error("This plugin requires PHP 7.0.");
         } else {
-            print "<h2>" . __("Per feed auto-extraction") . "</h2>";
+            print "<h2>" . __("Send feed notification via Ntfy") . "</h2>";
 
             print_notice("Enable for specific feeds in the feed editor.");
 
@@ -72,7 +75,7 @@ class Ntfy extends Plugin
             $ntfy_topic = $this->host->get($this, "ntfy_topic");
             $ntfy_token = $this->host->get($this, "ntfy_token");
 
-            print "<input dojoType='dijit.form.ValidationTextBox' required='1' name='ntfy_server' value='" . $ntfy_server . "'/>";
+            print "<input dojoType='dijit.form.ValidationTextBox' required='1' name='ntfy_server' value='$ntfy_server'/>";
 
             print "&nbsp;<label for='ntfy_server'>" . __("Your Ntfy server, includes ip and port, eg http://ntfy.lan:8007") . "</label><br/>";
             print "<input dojoType='dijit.form.ValidationTextBox' required='1' name='ntfy_topic' value='$ntfy_topic'/>";
@@ -117,6 +120,30 @@ class Ntfy extends Plugin
         print "</div>";
     }
 
+    public function hook_prefs_edit_feed($feed_id)
+    {
+        print "<header>".__("Ntfy")."</header>";
+        print "<section>";
+
+        $enabled_feeds = $this
+            ->host
+            ->get($this, "enabled_feeds");
+        if (!is_array($enabled_feeds)) {
+            $enabled_feeds = array();
+        }
+
+        $key = array_search($feed_id, $enabled_feeds);
+        $checked = $key !== false ? "checked" : "";
+
+        print "<fieldset>";
+
+        print "<label class='checkbox'><input dojoType='dijit.form.CheckBox' type='checkbox' id='ntfy_enabled' name='ntfy_enabled' $checked>&nbsp;" . __('Send notification via Ntfy') . "</label>";
+
+        print "</fieldset>";
+
+        print "</section>";
+    }
+
     public function hook_prefs_save_feed($feed_id)
     {
         $enabled_feeds = $this
@@ -127,7 +154,7 @@ class Ntfy extends Plugin
             $enabled_feeds = array();
         }
 
-        $enable = checkbox_to_sql_bool($_POST["mercury_fulltext_enabled"]);
+        $enable = checkbox_to_sql_bool($_POST["ntfy_enabled"]);
 
         $key = array_search($feed_id, $enabled_feeds);
 
@@ -144,6 +171,25 @@ class Ntfy extends Plugin
         $this
             ->host
             ->set($this, "enabled_feeds", $enabled_feeds);
+    }
+
+     public function hook_article_filter($article)
+    {
+        $enabled_feeds = $this
+            ->host
+            ->get($this, "enabled_feeds");
+
+        if (!is_array($enabled_feeds)) {
+            return $article;
+        }
+
+        $key = array_search($article["feed"]["id"], $enabled_feeds);
+
+        if ($key === false) {
+            return $article;
+        }
+
+        return $this->process_article($article);
     }
 
     /**
