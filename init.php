@@ -189,7 +189,7 @@ class Ntfy extends Plugin
             return $article;
         }
 
-        return $this->process_article($article);
+        return $this->send_request($article);
     }
 
     /**
@@ -202,7 +202,6 @@ class Ntfy extends Plugin
 
     public function send_request($article)
     {
-	
         $ntfy_server = $this->host->get($this, "ntfy_server");
         $ntfy_topic = $this->host->get($this, "ntfy_topic");
         $ntfy_token = $this->host->get($this, "ntfy_token");
@@ -218,12 +217,14 @@ class Ntfy extends Plugin
 	{
 	    $headers[] = "Authorization: Bearer " . $ntfy_token;
 	}
-	
 
+	$title = empty($article["author"])
+		? $article["title"]
+		: "【" . $article["author"] . "】" . $article["title"];
 	$jsonData = json_encode([
             "topic" => $ntfy_topic,
             "message" => $truncatedContent,
-            "title" => $article["title"],
+            "title" => $title,
             "tags" => ["mailbox_with_mail"],
             "click" => $article["link"],
         ]);
@@ -263,36 +264,5 @@ class Ntfy extends Plugin
         }
 
         return $tmp;
-    }
-
-    private function encode_uri($url)
-    {
-        // From: https://stackoverflow.com/a/6059053
-        // http://php.net/manual/en/function.rawurlencode.php
-        // https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/encodeURI
-        $unescaped = array(
-            '%2D'=>'-','%5F'=>'_','%2E'=>'.','%21'=>'!', '%7E'=>'~',
-            '%2A'=>'*', '%27'=>"'", '%28'=>'(', '%29'=>')'
-        );
-        $reserved = array(
-            '%3B'=>';','%2C'=>',','%2F'=>'/','%3F'=>'?','%3A'=>':',
-            '%40'=>'@','%26'=>'&','%3D'=>'=','%2B'=>'+','%24'=>'$'
-        );
-        $score = array(
-            '%23'=>'#'
-        );
-        return strtr(rawurlencode($url), array_merge($reserved,$unescaped,$score));
-
-    }
-
-    private function process_link($url)
-    {
-        // Encode url when not encoded
-        // Characters defined in RFC 3986, Appendix A
-        if (!preg_match('/^[0-9a-zA-Z!#$%&\'()*+,\-.\/:;=?@\[\]_~]*$/', $url)) {
-            $url = $this->encode_uri($url);
-        }
-
-        return rawurlencode($url);
     }
 }
