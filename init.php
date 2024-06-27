@@ -218,9 +218,15 @@ class Ntfy extends Plugin
 	    $headers[] = "Authorization: Bearer " . $ntfy_token;
 	}
 
-	$title = empty($article["author"])
-		? $article["title"]
-		: "【" . $article["author"] . "】" . $article["title"];
+	// get article feed title
+	$title = $article["title"];
+    	$sth = $this
+		->pdo
+		->prepare("SELECT title FROM ttrss_feeds WHERE id = ? AND owner_uid = ?");
+        $sth->execute([$article["feed"]["id"], $article["owner_uid"]]);
+	if($row = $sth->fetch()) {
+	    $title = "【" . $row["title"] . "】" . $title;  
+	}
 	$jsonData = json_encode([
             "topic" => $ntfy_topic,
             "message" => $truncatedContent,
