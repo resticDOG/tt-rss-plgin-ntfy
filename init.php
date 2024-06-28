@@ -139,7 +139,7 @@ class Ntfy extends Plugin {
         $enabled_feeds = $this->host->get_array($this, "enabled_feeds");
 
         if (in_array($article["feed"]["id"], $enabled_feeds)) {
-            $this->send_notification($article);
+            $article = $this->send_notification($article);
         }
 
         return $article;
@@ -153,6 +153,11 @@ class Ntfy extends Plugin {
     }
 
     public function send_notification($article) {
+        // check if the article ntfy tag exists
+        $tags = (is_array($article["tags"])) ? $article["tags"] : array();
+        if (in_array("ntfy", $tags)) {
+            return $article;
+        }
         $ntfy_server = $this->host->get($this, "ntfy_server");
         $ntfy_topic = $this->host->get($this, "ntfy_topic");
         $ntfy_token = $this->host->get($this, "ntfy_token");
@@ -160,8 +165,8 @@ class Ntfy extends Plugin {
         $ch = curl_init();
 
         $content = $this->clean_html($article['content']);
-        $truncatedContent = strlen($content) > 500 
-          ? mb_substr($content, 0, 500, 'UTF-8') . "..." 
+        $truncatedContent = strlen($content) > 500
+          ? mb_substr($content, 0, 500, 'UTF-8') . "..."
           : $content;
 
         $headers = [];
@@ -185,6 +190,9 @@ class Ntfy extends Plugin {
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_exec($ch);
         curl_close($ch);
+
+        array_push($article["tags"], "ntfy");
+        return $article;
     }
 
     public function api_version() {
