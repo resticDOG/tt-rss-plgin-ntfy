@@ -30,10 +30,10 @@ class Ntfy extends Plugin {
             return;
         }
 
-	    $host->add_hook($host::HOOK_ARTICLE_FILTER, $this);
+  	    $host->add_hook($host::HOOK_ARTICLE_FILTER, $this);
         $host->add_hook($host::HOOK_PREFS_EDIT_FEED, $this);
         $host->add_hook($host::HOOK_PREFS_SAVE_FEED, $this);
-	    $host->add_hook($host::HOOK_PREFS_TAB, $this);
+  	    $host->add_hook($host::HOOK_PREFS_TAB, $this);
         $host->add_filter_action($this, "Notification", __("Send Notification"));
     }
 
@@ -78,7 +78,7 @@ class Ntfy extends Plugin {
 
                 </form>
                 <hr />
-		<?php
+		    <?php
 
         $enabled_feeds = $this->host->get_array($this, "enabled_feeds");
         $enabled_feeds = $this->filter_unknown_feeds($enabled_feeds);
@@ -139,7 +139,7 @@ class Ntfy extends Plugin {
         $enabled_feeds = $this->host->get_array($this, "enabled_feeds");
 
         if (in_array($article["feed"]["id"], $enabled_feeds)) {
-            $this->send_request($article);
+            $this->send_notification($article);
         }
 
         return $article;
@@ -149,19 +149,20 @@ class Ntfy extends Plugin {
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function hook_article_filter_action($article, $action) {
-        $this->send_request($article);
+        $this->send_notification($article);
     }
 
-    public function send_request($article) {
+    public function send_notification($article) {
         $ntfy_server = $this->host->get($this, "ntfy_server");
         $ntfy_topic = $this->host->get($this, "ntfy_topic");
         $ntfy_token = $this->host->get($this, "ntfy_token");
 
         $ch = curl_init();
+
         $content = $this->clean_html($article['content']);
-	    $truncatedContent = strlen($content) > 500
-		? mb_substr($content, 0, 500, 'UTF-8') . "..."
-		: $content;
+        $truncatedContent = strlen($content) > 500 
+          ? mb_substr($content, 0, 500, 'UTF-8') . "..." 
+          : $content;
 
         $headers = [];
         if (strlen(trim($ntfy_token)) > 0) {
