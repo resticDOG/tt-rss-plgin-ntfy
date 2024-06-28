@@ -38,7 +38,7 @@ class Ntfy extends Plugin {
     }
 
      public function hook_prefs_tab($args) {
-        if ($args != "prefFeeds") {
+        if ($args != "prefPrefs") {
             return;
         }
 
