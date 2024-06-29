@@ -34,7 +34,8 @@ class Ntfy extends Plugin {
         $host->add_hook($host::HOOK_PREFS_EDIT_FEED, $this);
         $host->add_hook($host::HOOK_PREFS_SAVE_FEED, $this);
   	    $host->add_hook($host::HOOK_PREFS_TAB, $this);
-        $host->add_filter_action($this, "Notification", __("Send Notification"));
+
+        $host->add_filter_action($this, "ntfy", __("Send Notification"));
     }
 
      public function hook_prefs_tab($args) {
@@ -149,49 +150,48 @@ class Ntfy extends Plugin {
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function hook_article_filter_action($article, $action) {
-        $this->send_notification($article);
+        return $this->send_notification($article);
     }
 
     public function send_notification($article) {
         // check if the article ntfy tag exists
         $tags = (is_array($article["tags"])) ? $article["tags"] : array();
-        if (in_array("ntfy", $tags)) {
-            return $article;
+        if (!in_array("ntfy", $tags)) {
+            $ntfy_server = $this->host->get($this, "ntfy_server");
+            $ntfy_topic = $this->host->get($this, "ntfy_topic");
+            $ntfy_token = $this->host->get($this, "ntfy_token");
+
+            $ch = curl_init();
+
+            $content = $this->clean_html($article['content']);
+            $truncatedContent = strlen($content) > 500
+            ? mb_substr($content, 0, 500, 'UTF-8') . "..."
+            : $content;
+
+            $headers = [];
+            if (strlen(trim($ntfy_token)) > 0) {
+                $headers[] = "Authorization: Bearer " . $ntfy_token;
+            }
+
+            // get article feed title
+            $title = "【" . Feeds::_get_title($article["feed"]["id"]) . "】" . $article["title"];
+            $jsonData = json_encode([
+                    "topic" => $ntfy_topic,
+                    "message" => $truncatedContent,
+                    "title" => $title,
+                    "tags" => ["mailbox_with_mail"],
+                    "click" => $article["link"],
+                ]);
+            curl_setopt($ch, CURLOPT_URL, $ntfy_server);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_exec($ch);
+            curl_close($ch);
+
+            array_push($article["tags"], "ntfy");
         }
-        $ntfy_server = $this->host->get($this, "ntfy_server");
-        $ntfy_topic = $this->host->get($this, "ntfy_topic");
-        $ntfy_token = $this->host->get($this, "ntfy_token");
-
-        $ch = curl_init();
-
-        $content = $this->clean_html($article['content']);
-        $truncatedContent = strlen($content) > 500
-          ? mb_substr($content, 0, 500, 'UTF-8') . "..."
-          : $content;
-
-        $headers = [];
-        if (strlen(trim($ntfy_token)) > 0) {
-            $headers[] = "Authorization: Bearer " . $ntfy_token;
-        }
-
-        // get article feed title
-        $title = "【" . Feeds::_get_title($article["feed"]["id"]) . "】" . $article["title"];
-        $jsonData = json_encode([
-                "topic" => $ntfy_topic,
-                "message" => $truncatedContent,
-                "title" => $title,
-                "tags" => ["mailbox_with_mail"],
-                "click" => $article["link"],
-            ]);
-        curl_setopt($ch, CURLOPT_URL, $ntfy_server);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_exec($ch);
-        curl_close($ch);
-
-        array_push($article["tags"], "ntfy");
         return $article;
     }
 
