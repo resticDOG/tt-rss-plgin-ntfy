@@ -1,4 +1,4 @@
-[中文](./README.CN.md)
+[中文](./README.zh_CN.md)
 
 ## Features
 
@@ -26,7 +26,7 @@
    - Notification topic (Topic)
    - Token
 
-![image.png](https://img.linkzz.eu.org/main/images/2024/10/2db2ec2587ca9d38d05d581ab209c25b.png)
+![image.png](./screenshots/2db2ec2587ca9d38d05d581ab209c25b.png)
 
 ## Usage
 
@@ -35,14 +35,14 @@
 Enable the plugin on the feed edit page to push notifications when the feed
 updates.
 
-![image.png](https://img.linkzz.eu.org/main/images/2024/10/fda8b59913cbd5a6b3a8dc56f993bf1d.png)
+![image.png](./screenshots/fda8b59913cbd5a6b3a8dc56f993bf1d.png)
 
 ### 2. Enable with Filter
 
 Create a filter and select **Invoke plugin**: **Ntfy: Send Notification** in the
 actions.
 
-![image.png](https://img.linkzz.eu.org/main/images/2024/10/623b8bec5f8a53b86cb4de8cf63b762c.png)
+![image.png](./screenshots/623b8bec5f8a53b86cb4de8cf63b762c.png)
 
 ### Troubleshooting
 

@@ -27,7 +27,7 @@ git clone https://github.com/resticDOG/tt-rss-plgin-ntfy.git ntfy
    - 通知主题 (Topic)
    - Token
 
-![image.png](https://img.linkzz.eu.org/main/images/2024/10/2db2ec2587ca9d38d05d581ab209c25b.png)
+![image.png](./screenshots/2db2ec2587ca9d38d05d581ab209c25b.png)
 
 ## 使用方法
 
@@ -35,13 +35,13 @@ git clone https://github.com/resticDOG/tt-rss-plgin-ntfy.git ntfy
 
 在订阅源编辑页面启用插件，当订阅源更新之后推送
 
-![image.png](https://img.linkzz.eu.org/main/images/2024/10/fda8b59913cbd5a6b3a8dc56f993bf1d.png)
+![image.png](./screenshots/fda8b59913cbd5a6b3a8dc56f993bf1d.png)
 
 ### 1. 结合过滤功能启用
 
 创建一个过滤器，在应用操作中选择 **Invoke plugin**: **Ntfy: Send Notification**
 
-![image.png](https://img.linkzz.eu.org/main/images/2024/10/623b8bec5f8a53b86cb4de8cf63b762c.png)
+![image.png](./screenshots/623b8bec5f8a53b86cb4de8cf63b762c.png)
 
 ### 故障排除
 
