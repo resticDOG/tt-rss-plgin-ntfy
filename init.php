@@ -30,10 +30,10 @@ class Ntfy extends Plugin {
             return;
         }
 
-  	    $host->add_hook($host::HOOK_ARTICLE_FILTER, $this);
+        $host->add_hook($host::HOOK_ARTICLE_FILTER, $this);
         $host->add_hook($host::HOOK_PREFS_EDIT_FEED, $this);
         $host->add_hook($host::HOOK_PREFS_SAVE_FEED, $this);
-  	    $host->add_hook($host::HOOK_PREFS_TAB, $this);
+        $host->add_hook($host::HOOK_PREFS_TAB, $this);
 
         $host->add_filter_action($this, "ntfy", __("Send Notification"));
     }
@@ -54,6 +54,7 @@ class Ntfy extends Plugin {
                 <h2> <?= __('Send feed notification via Ntfy')  ?></h2>
 
                 <form dojoType="dijit.form.Form">
+                    <?= \Controls\pluginhandler_tags($this, "save") ?>
                     <script type="dojo/method" event="onSubmit" args="evt">
                         evt.preventDefault();
                         if (this.validate()) {
@@ -66,20 +67,20 @@ class Ntfy extends Plugin {
 
                     <div class="alert alert-info"><?= __("You can enable notification for specific feeds in the feed editor") ?></div>
                     <input dojoType="dijit.form.ValidationTextBox" required="1" name="ntfy_server" value="<?= $ntfy_server ?>"/>
-                    <label for="ntfy_server"><?= __("Your Ntfy server, including IP and port, e.g. http://ntfy.lan:8007") ?> </label>
+                    <label for="ntfy_server"><?= __("Your Ntfy server, including IP and port, e.g. http://ntfy.lan:8007. Alternatively, you can use the public server at https://ntfy.sh.") ?> </label>
                     <br/>
                     <input dojoType="dijit.form.ValidationTextBox" required="1" name="ntfy_topic" value="<?= $ntfy_topic ?>"/>
                     <label for="ntfy_topic"><?= __("Your Ntfy topic, e.g. tt-rss") ?> </label>
                     <br/>
-                    <input dojoType="dijit.form.ValidationTextBox" required="1" name="ntfy_token" value="<?= $ntfy_token ?>"/>
-                    <label for="ntfy_token"><?= __("Your Ntfy authentication token. Set it if you have enabled it") ?> </label>
+                    <input dojoType="dijit.form.ValidationTextBox" name="ntfy_token" value="<?= $ntfy_token ?>"/>
+                    <label for="ntfy_token"><?= __("Your Ntfy authentication token. Set it if authentication is enabled.") ?> </label>
                     <br/>
 
                     <?= \Controls\submit_tag(__("Save")) ?>
 
                 </form>
                 <hr />
-		    <?php
+        <?php
 
         $enabled_feeds = $this->host->get_array($this, "enabled_feeds");
         $enabled_feeds = $this->filter_unknown_feeds($enabled_feeds);
@@ -200,9 +201,9 @@ class Ntfy extends Plugin {
     }
 
     private function clean_html($html) {
-     	$html = str_replace(array('<br>', '<br/>', '<br />'), "\n", $html);
-    	$cleaned_html = strip_tags($html);
-    	return $cleaned_html;
+        $html = str_replace(array('<br>', '<br/>', '<br />'), "\n", $html);
+        $cleaned_html = strip_tags($html);
+        return $cleaned_html;
     }
 
     private function filter_unknown_feeds($enabled_feeds) {
