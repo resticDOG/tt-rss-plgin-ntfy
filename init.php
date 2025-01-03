@@ -23,6 +23,28 @@ class Ntfy extends Plugin {
         echo __("Ntfy settings saved.");
     }
 
+    public function test_notify() {
+        $ntfy_server = $_POST["ntfy_server"];
+        $ntfy_topic = $_POST["ntfy_topic"];
+        $ntfy_token = $_POST["ntfy_token"];
+
+        $message = [
+            "topic" => $ntfy_topic,
+            "message" => "This is a test notification from Tiny Tiny RSS",
+            "title" => "Test Notification",
+            "tags" => ["mailbox_with_mail"]
+        ];
+
+        $error = $this->send_ntfy_message($ntfy_server, $ntfy_token, $message);
+        
+        
+        if ($error) {
+            echo __("Error sending test notification:") . " " . $error;
+        } else {
+            echo __("Test notification sent successfully");
+        }
+    }
+
     public function init($host) {
         $this->host = $host;
 
@@ -53,7 +75,7 @@ class Ntfy extends Plugin {
 
                 <h2> <?= __('Send feed notification via Ntfy')  ?></h2>
 
-                <form dojoType="dijit.form.Form">
+                <form id="ntfyForm" dojoId="ntfyForm" dojoType="dijit.form.Form">
                     <?= \Controls\pluginhandler_tags($this, "save") ?>
                     <script type="dojo/method" event="onSubmit" args="evt">
                         evt.preventDefault();
@@ -77,6 +99,29 @@ class Ntfy extends Plugin {
                     <br/>
 
                     <?= \Controls\submit_tag(__("Save")) ?>
+
+                    <button dojoType="dijit.form.Button">
+                       <?= __("Test") ?>
+                       <script type="dojo/on" data-dojo-event="click" data-dojo-args="evt" >
+                          require(['dojo/dom-form'], function(domForm) {
+                          Notify.progress('Sending test notification...', true);
+                          const ntfyData = domForm.toObject('ntfyForm')
+                          xhr.post("backend.php", {
+                              ...ntfyData,
+                              op: "PluginHandler",
+                              plugin: "ntfy",
+                              method: "test_notify"
+                          }, reply => {
+                              if (reply.errors) {
+                                  Notify.error(reply.errors.join('; '));
+                              } else {
+                                  Notify.info(reply);
+                              }
+                          });
+                          });
+
+                      </script>
+                    </button>
 
                 </form>
                 <hr />
@@ -162,38 +207,45 @@ class Ntfy extends Plugin {
             $ntfy_topic = $this->host->get($this, "ntfy_topic");
             $ntfy_token = $this->host->get($this, "ntfy_token");
 
-            $ch = curl_init();
-
             $content = $this->clean_html($article['content']);
             $truncatedContent = strlen($content) > 500
-            ? mb_substr($content, 0, 500, 'UTF-8') . "..."
-            : $content;
+                ? mb_substr($content, 0, 500, 'UTF-8') . "..."
+                : $content;
 
-            $headers = [];
-            if (strlen(trim($ntfy_token)) > 0) {
-                $headers[] = "Authorization: Bearer " . $ntfy_token;
-            }
-
-            // get article feed title
             $title = "【" . Feeds::_get_title($article["feed"]["id"]) . "】" . $article["title"];
-            $jsonData = json_encode([
-                    "topic" => $ntfy_topic,
-                    "message" => $truncatedContent,
-                    "title" => $title,
-                    "tags" => ["mailbox_with_mail"],
-                    "click" => $article["link"],
-                ]);
-            curl_setopt($ch, CURLOPT_URL, $ntfy_server);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            curl_exec($ch);
-            curl_close($ch);
+            $message = [
+                "topic" => $ntfy_topic,
+                "message" => $truncatedContent,
+                "title" => $title,
+                "tags" => ["mailbox_with_mail"],
+                "click" => $article["link"],
+            ];
 
+            $this->send_ntfy_message($ntfy_server, $ntfy_token, $message);
             array_push($article["tags"], "ntfy");
         }
         return $article;
+    }
+
+    private function send_ntfy_message($server, $token, $message) {
+        $ch = curl_init();
+
+        $headers = [];
+        if (strlen(trim($token)) > 0) {
+            $headers[] = "Authorization: Bearer " . $token;
+        }
+
+        curl_setopt($ch, CURLOPT_URL, $server);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($message));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        
+        curl_exec($ch);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        return $error;
     }
 
     public function api_version() {
